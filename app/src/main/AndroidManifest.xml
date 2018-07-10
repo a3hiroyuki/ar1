@@ -20,7 +20,7 @@
         tools:ignore="GoogleAppIndexingWarning">
 
         <activity
-            android:name="com.google.ar.core.examples.java.augmentedimage.ARActivity"
+            android:name="com.google.ar.core.examples.java.augmentedimage.MainActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true"
             android:screenOrientation="locked"
@@ -30,6 +30,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".ArActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="true"
+            android:screenOrientation="locked"
+            android:theme="@style/Theme.AppCompat.NoActionBar"></activity>
         <activity android:name=".ResultActivity" ></activity>
         <!-- This tag indicates that this application requires ARCore.  This results in the Google Play
              Store downloading and installing ARCore along with the application. -->

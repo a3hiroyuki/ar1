@@ -5,7 +5,6 @@ import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
-import android.media.AudioManager;
 import android.media.SoundPool;
 import android.net.Uri;
 import android.os.Bundle;
@@ -42,8 +41,8 @@ import java.util.HashMap;
 import java.util.Map;
 import com.bumptech.glide.Glide;
 
-public class ARActivity extends AppCompatActivity implements AugmentedImageNode.Callback{
-    private static final String TAG = ARActivity.class.getSimpleName();
+public class ArActivity extends AppCompatActivity implements AugmentedImageNode.Callback{
+    private static final String TAG = ArActivity.class.getSimpleName();
 
     // Rendering. The Renderers are created here, and initialized when the GL surface is created.
     private ArSceneView arSceneView;
@@ -60,13 +59,16 @@ public class ARActivity extends AppCompatActivity implements AugmentedImageNode.
     public static int gKeyScore = 0;
 
     private ImageView mFitToScanView;
+    ImageView mKeyView;
+
+    private RequestManager mGlideRequestManager;
 
     private static final int SOUND_NUM = 10;
     private SoundPool mSp;
     private Map<String, Integer> mSoundMap = new HashMap<String, Integer>();
 
     private Map<Integer, String> keyUriMap = new HashMap<Integer, String>(){
-        {put(0, "file:///android_asset/key.png");}
+        {put(0, "file:///android_asset/");}
         {put(1, "file:///android_asset/bronze_key.png");}
         {put(2, "file:///android_asset/silver_key.png");}
         {put(3, "file:///android_asset/gold_key.png");}
@@ -78,7 +80,7 @@ public class ARActivity extends AppCompatActivity implements AugmentedImageNode.
         setContentView(R.layout.ar_main);
 
         Intent intent = getIntent();
-        gKeyScore = intent.getIntExtra("key_rank", 3);
+        gKeyScore = intent.getIntExtra("key_rank", 0);
 
         //サウンド関連処理
         AudioAttributes attr = new AudioAttributes.Builder()
@@ -94,6 +96,12 @@ public class ARActivity extends AppCompatActivity implements AugmentedImageNode.
             AssetFileDescriptor fd = getAssets().openFd("hazure.mp3");
             int id = mSp.load(fd, 1);
             mSoundMap.put("hazure", id);
+            fd = getAssets().openFd("seikai.mp3");
+            id = mSp.load(fd, 1);
+            mSoundMap.put("seikai", id);
+            fd = getAssets().openFd("get.mp3");
+            id = mSp.load(fd, 1);
+            mSoundMap.put("get", id);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -106,14 +114,14 @@ public class ARActivity extends AppCompatActivity implements AugmentedImageNode.
         mTcFactory.createAll();
 
         mFitToScanView = findViewById(R.id.image_view_fit_to_scan);
-        ImageView keyView = findViewById(R.id.image_key);
-        RequestManager glideRequestManager = Glide.with(this);
-        glideRequestManager
-                .load(Uri.parse("file:///android_asset/fit_to_scan.png"))
+        mKeyView = findViewById(R.id.image_key);
+        mGlideRequestManager = Glide.with(this);
+        mGlideRequestManager
+                .load(Uri.parse("file:///android_asset/fit_to_scan2.png"))
                 .into(mFitToScanView);
-        glideRequestManager
+        mGlideRequestManager
                 .load(Uri.parse(keyUriMap.get(gKeyScore)))
-                .into(keyView);
+                .into(mKeyView);
 
         initializeSceneView();
     }
@@ -298,9 +306,27 @@ public class ARActivity extends AppCompatActivity implements AugmentedImageNode.
         return null;
     }
 
+
     @Override
-    public void openTreasureChest(int keyScore) {
-        Toast.makeText(this, "fdfd", Toast.LENGTH_SHORT).show();
+    protected void onDestroy() {
+        super.onDestroy();
+        mSp.unload(mSoundMap.get("hazure"));
+        mSp.unload(mSoundMap.get("seikai"));
+        mSp.unload(mSoundMap.get("get"));
+        mSp.release();
+    }
+
+    @Override
+    public void openTreasureChest() {
+        playSound("seikai");
+        mGlideRequestManager
+                .load(Uri.parse(keyUriMap.get(0)))
+                .into(mKeyView);
+    }
+
+    @Override
+    public void getItem(int itemGrade) {
+        playSound("get");
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -314,13 +340,6 @@ public class ARActivity extends AppCompatActivity implements AugmentedImageNode.
                 finish();
             }
         }).start();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mSp.unload(mSoundMap.get("hazure"));
-        mSp.release();
     }
 
     @Override

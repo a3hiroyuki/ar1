@@ -8,8 +8,7 @@ import com.google.ar.core.examples.java.augmentedimage.sceneform.AugmentedImageN
 public class GoldenTreasureChest extends TreasureChestBase {
 
     private static String OBJ_NAME = "andy1.sfb";
-    private static int KEY_SCORE = 3;
-
+    private static int RANK = 3;
 
     public GoldenTreasureChest(Context con, String id, String fileName) {
         super(con, id, fileName);
@@ -18,9 +17,9 @@ public class GoldenTreasureChest extends TreasureChestBase {
     @Override
     public AugmentedImageNode createAugmentedImageNode(Context con, AugmentedImage image) {
         if(mAugmentedImageNode == null){
-            mAugmentedImageNode = new AugmentedImageNode(con, OBJ_NAME, KEY_SCORE);
+            mAugmentedImageNode = new AugmentedImageNode(con, OBJ_NAME, RANK);
         }
-        mAugmentedImageNode.setImage(image, KEY_SCORE);
+        mAugmentedImageNode.setImage(image);
         return mAugmentedImageNode;
     }
 }

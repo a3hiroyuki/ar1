@@ -3,7 +3,6 @@ package com.google.ar.core.examples.java.augmentedimage.treasurechest;
 import android.content.Context;
 
 import com.google.ar.core.AugmentedImage;
-import com.google.ar.core.examples.java.augmentedimage.ARActivity;
 import com.google.ar.core.examples.java.augmentedimage.sceneform.AugmentedImageNode;
 
 public abstract class TreasureChestBase {

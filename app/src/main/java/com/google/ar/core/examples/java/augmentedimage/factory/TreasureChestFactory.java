@@ -13,7 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TreasureChestFactory extends Factory {
+public class
+TreasureChestFactory extends Factory {
 
 
     protected enum ChestColor  { Gold, Silver, Bronse};

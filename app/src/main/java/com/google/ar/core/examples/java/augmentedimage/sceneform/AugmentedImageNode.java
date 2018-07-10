@@ -8,11 +8,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.ar.core.AugmentedImage;
 import com.google.ar.core.Pose;
-import com.google.ar.core.examples.java.augmentedimage.ARActivity;
+import com.google.ar.core.examples.java.augmentedimage.ArActivity;
 import com.google.ar.core.examples.java.augmentedimage.R;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.FrameTime;
@@ -34,29 +33,31 @@ public class AugmentedImageNode extends AnchorNode {
     private Node mInfoCard;
     private Callback mCallback;
     private Node mNode1, mNode2;
-    private int mKeyScore;
+    private int mTreasureChestRank;
     private boolean mIsNodeDisp = true;
+    private Context mContext;
+    String mess1 = "この鍵で宝箱を開けられます\neverタップしてください";
+    String mess2 = "この鍵で宝箱は開けられません";
 
     public interface Callback{
-        public abstract void openTreasureChest(int keyScore);
+        public abstract void openTreasureChest();
+        public abstract void getItem(int itemGrade);
         public abstract void playSound(String name);
     }
 
-    public AugmentedImageNode(Context context, String filename, int keyScore) {
+    public AugmentedImageNode(Context context, String filename, int rank) {
         // Upon construction, start loading the modelFuture
-        mKeyScore = keyScore;
+        mTreasureChestRank = rank;
+        mContext = context;
         modelFuture = ModelRenderable.builder().setRegistryId("modelFuture")
                 .setSource(context, Uri.parse(filename))
                 .build();
         modelFuture2 = ModelRenderable.builder().setRegistryId("modelFuture2")
                 .setSource(context, Uri.parse("Saturn.sfb"))
                 .build();
-        mCallback = (ARActivity)context;
-        if(ARActivity.gKeyScore >= keyScore){
-            mInfoCard = createSelectCard(context);
-        }else{
-            mInfoCard = createInfoCard(context);
-        }
+        mCallback = (ArActivity)context;
+        mInfoCard = createInfoCard(context, mess2);
+        mCallback.playSound("seikai");
     }
 
     /**
@@ -65,13 +66,13 @@ public class AugmentedImageNode extends AnchorNode {
      *
      * @param image captured by your camera
      */
-    public void setImage(AugmentedImage image, int keyScore) {
+    public void setImage(AugmentedImage image) {
 
         this.image = image;
         if(mIsNodeDisp){
             if (!modelFuture.isDone()) {
                 CompletableFuture.allOf(modelFuture).thenAccept((Void aVoid) -> {
-                    setImage(image, keyScore);
+                    setImage(image);
                 }).exceptionally(throwable -> {
                     Log.e(TAG, "Exception loading", throwable);
                     return null;
@@ -80,7 +81,7 @@ public class AugmentedImageNode extends AnchorNode {
         }else{
             if (!modelFuture2.isDone()) {
                 CompletableFuture.allOf(modelFuture2).thenAccept((Void aVoid) -> {
-                    setImage(image, keyScore);
+                    setImage(image);
                 }).exceptionally(throwable -> {
                     Log.e(TAG, "Exception loading", throwable);
                     return null;
@@ -94,19 +95,28 @@ public class AugmentedImageNode extends AnchorNode {
             if(mNode1 == null){
                 mNode1 = new Node();
                 mNode1.setParent(this);
+                mNode1.setOnTapListener(new OnTapListener() {
+                    @Override
+                    public void onTap(HitTestResult hitTestResult, MotionEvent motionEvent) {
+                        if(ArActivity.gKeyScore >= mTreasureChestRank){
+                            mIsNodeDisp = false;
+                            Pose pose = Pose.makeTranslation(100.0f, 100.0f, -100.0f);
+                            mNode1.setLocalPosition(new Vector3(pose.tx(), pose.ty(), pose.tz()));
+                            mNode1.setParent(AugmentedImageNode.this);
+                            setImage(image);
+                            //mCallback.playSound("seikai");
+                            mCallback.openTreasureChest();
+                        }else{
+                            mCallback.playSound("hazure");
+                            mInfoCard.setEnabled(false);
+                        }
+                    }
+                });
             }
-            mNode1.setOnTapListener(new OnTapListener() {
-                @Override
-                public void onTap(HitTestResult hitTestResult, MotionEvent motionEvent) {
-                    mInfoCard.setEnabled(true);
-                    mCallback.playSound("hazure");
-                }
-            });
-
             Pose pose = Pose.makeTranslation(0.0f, 0.0f, -0.15f);
 
             mNode1.setLocalPosition(new Vector3(pose.tx(), pose.ty(), pose.tz()));
-            mNode1.setLocalRotation(new Quaternion(pose.qx(), pose.qy(), pose.qz(), pose.qw()));
+            //mNode1.setLocalRotation(new Quaternion(pose.qx(), pose.qy(), pose.qz(), pose.qw()));
             mNode1.setRenderable(modelFuture.getNow(null));
             mInfoCard.setParent(mNode1);
             mInfoCard.setLocalPosition(new Vector3(0.0f, 0.0f, -0.2f));
@@ -114,18 +124,20 @@ public class AugmentedImageNode extends AnchorNode {
             if(mNode2 == null){
                 mNode2 = new Node();
                 mNode2.setParent(this);
+                mNode2.setOnTapListener(new OnTapListener() {
+                    @Override
+                    public void onTap(HitTestResult hitTestResult, MotionEvent motionEvent) {
+                        mCallback.getItem(mTreasureChestRank);
+                        Pose pose = Pose.makeTranslation(100.0f, 100.0f, -100.0f);
+                        mNode2.setLocalPosition(new Vector3(pose.tx(), pose.ty(), pose.tz()));
+                        mNode2.setParent(AugmentedImageNode.this);
+                    }
+                });
             }
-            mNode2.setOnTapListener(new OnTapListener() {
-                @Override
-                public void onTap(HitTestResult hitTestResult, MotionEvent motionEvent) {
-                    mCallback.openTreasureChest(mKeyScore);
-                }
-            });
-
             Pose pose = Pose.makeTranslation(0.0f, 0.0f, -0.15f);
 
             mNode2.setLocalPosition(new Vector3(pose.tx(), pose.ty(), pose.tz()));
-            mNode2.setLocalRotation(new Quaternion(pose.qx(), pose.qy(), pose.qz(), pose.qw()));
+            //mNode2.setLocalRotation(new Quaternion(pose.qx(), pose.qy(), pose.qz(), pose.qw()));
             mNode2.setRenderable(modelFuture2.getNow(null));
         }
     }
@@ -135,7 +147,7 @@ public class AugmentedImageNode extends AnchorNode {
     }
 
 
-    private Node createInfoCard(Context con) {
+    private Node createInfoCard(Context con, String mess) {
         Node infoCard = new Node();
         ViewRenderable.builder()
                 .setView(con, R.layout.card_view)
@@ -143,7 +155,9 @@ public class AugmentedImageNode extends AnchorNode {
                 .thenAccept(
                         (renderable) -> {
                             infoCard.setRenderable(renderable);
-                            TextView textView = (TextView) renderable.getView();
+                            View view = renderable.getView();
+                            TextView tv = (TextView) view.findViewById(R.id.infoCard);
+                            tv.setText(mess);
                         })
                 .exceptionally(
                         (throwable) -> {
@@ -168,9 +182,10 @@ public class AugmentedImageNode extends AnchorNode {
                                 public void onClick(View v) {
                                     mIsNodeDisp = false;
                                     removeChild(mNode1);
-                                    mNode1.setRenderable(null);
                                     mNode1.setEnabled(false);
-                                    setImage(image, mKeyScore);
+                                    Pose pose = Pose.makeTranslation(100.0f, 100.0f, -100.0f);
+                                    mNode1.setLocalPosition(new Vector3(pose.tx(), pose.ty(), pose.tz()));
+                                    mNode1.setParent(AugmentedImageNode.this);
                                 }
                             });
                         })
