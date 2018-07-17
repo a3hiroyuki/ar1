@@ -3,6 +3,7 @@ package com.google.ar.core.examples.java.augmentedimage.factory;
 import android.content.Context;
 
 import com.google.ar.core.AugmentedImage;
+import com.google.ar.core.examples.java.augmentedimage.treasurechest.BronzeTreasureChest;
 import com.google.ar.core.examples.java.augmentedimage.treasurechest.GoldenTreasureChest;
 import com.google.ar.core.examples.java.augmentedimage.treasurechest.SilverTreasureChest;
 import com.google.ar.core.examples.java.augmentedimage.treasurechest.TreasureChestBase;
@@ -32,7 +33,7 @@ TreasureChestFactory extends Factory {
         }else if(color == ChestColor.Silver){
             return new SilverTreasureChest(mCon, id, imageFile);
         }else{
-            return null;
+            return new BronzeTreasureChest(mCon, id, imageFile);
         }
     }
 
@@ -44,14 +45,7 @@ TreasureChestFactory extends Factory {
     public void createAll(){
         create(ChestColor.Gold, "delorean", "delorean.jpg");
         create(ChestColor.Silver, "docomodake", "docomodake.jpg");
-    }
-
-    public void checkAll(String id){
-        for(TreasureChestBase tcb : mTcList){
-            if(tcb.getId().equals(id)){
-                break;
-            }
-        }
+        create(ChestColor.Bronse, "poinko", "poinko.png");
     }
 
     public Map getMap(){

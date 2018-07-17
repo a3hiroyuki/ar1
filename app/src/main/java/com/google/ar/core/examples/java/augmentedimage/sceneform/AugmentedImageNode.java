@@ -29,7 +29,7 @@ public class AugmentedImageNode extends AnchorNode {
     private static final String TAG = "AugmentedImageNode";
 
     private AugmentedImage image;
-    private CompletableFuture<ModelRenderable> modelFuture, modelFuture2;
+    private CompletableFuture<ModelRenderable> modelFuture1, modelFuture2;
     private Node mInfoCard;
     private Callback mCallback;
     private Node mNode1, mNode2;
@@ -37,7 +37,9 @@ public class AugmentedImageNode extends AnchorNode {
     private boolean mIsNodeDisp = true;
     private Context mContext;
     String mess1 = "この鍵で宝箱を開けられます\neverタップしてください";
-    String mess2 = "この鍵で宝箱は開けられません";
+    String mess2 = "この鍵で\nこの宝箱は\n開けられません";
+    private Vector3 mInitPosition = new Vector3();
+    private Quaternion mInitRotation = new Quaternion();
 
     public interface Callback{
         public abstract void openTreasureChest();
@@ -45,19 +47,25 @@ public class AugmentedImageNode extends AnchorNode {
         public abstract void playSound(String name);
     }
 
-    public AugmentedImageNode(Context context, String filename, int rank) {
+    public AugmentedImageNode(Context context, String objFilename, String rewardFileName, int rank) {
         // Upon construction, start loading the modelFuture
         mTreasureChestRank = rank;
         mContext = context;
-        modelFuture = ModelRenderable.builder().setRegistryId("modelFuture")
-                .setSource(context, Uri.parse(filename))
+        modelFuture1 = ModelRenderable.builder().setRegistryId("modelFuture")
+                .setSource(context, Uri.parse(objFilename))
                 .build();
         modelFuture2 = ModelRenderable.builder().setRegistryId("modelFuture2")
-                .setSource(context, Uri.parse("Saturn.sfb"))
+                .setSource(context, Uri.parse(rewardFileName))
                 .build();
         mCallback = (ArActivity)context;
-        mInfoCard = createInfoCard(context, mess2);
         mCallback.playSound("seikai");
+    }
+
+    public void setRotation(Quaternion q){
+        mInitRotation = q;
+    }
+    public void setPosition(Vector3 p){
+        mInitPosition = p;
     }
 
     /**
@@ -70,8 +78,8 @@ public class AugmentedImageNode extends AnchorNode {
 
         this.image = image;
         if(mIsNodeDisp){
-            if (!modelFuture.isDone()) {
-                CompletableFuture.allOf(modelFuture).thenAccept((Void aVoid) -> {
+            if (!modelFuture1.isDone()) {
+                CompletableFuture.allOf(modelFuture1).thenAccept((Void aVoid) -> {
                     setImage(image);
                 }).exceptionally(throwable -> {
                     Log.e(TAG, "Exception loading", throwable);
@@ -91,40 +99,33 @@ public class AugmentedImageNode extends AnchorNode {
 
         setAnchor(image.createAnchor(image.getCenterPose()));
 
-        if(mIsNodeDisp){
+        if(mIsNodeDisp) {
             if(mNode1 == null){
-                mNode1 = new Node();
-                mNode1.setParent(this);
-                mNode1.setOnTapListener(new OnTapListener() {
+                mNode1 = createNode(mInitPosition, mInitRotation, new OnTapListener() {
                     @Override
                     public void onTap(HitTestResult hitTestResult, MotionEvent motionEvent) {
-                        if(ArActivity.gKeyScore >= mTreasureChestRank){
+                        if (ArActivity.gKeyScore >= mTreasureChestRank) {
                             mIsNodeDisp = false;
                             Pose pose = Pose.makeTranslation(100.0f, 100.0f, -100.0f);
                             mNode1.setLocalPosition(new Vector3(pose.tx(), pose.ty(), pose.tz()));
                             mNode1.setParent(AugmentedImageNode.this);
                             setImage(image);
-                            //mCallback.playSound("seikai");
                             mCallback.openTreasureChest();
-                        }else{
+                        } else {
                             mCallback.playSound("hazure");
-                            mInfoCard.setEnabled(false);
+                            mInfoCard.setEnabled(true);
                         }
                     }
                 });
             }
-            Pose pose = Pose.makeTranslation(0.0f, 0.0f, -0.15f);
-
-            mNode1.setLocalPosition(new Vector3(pose.tx(), pose.ty(), pose.tz()));
-            //mNode1.setLocalRotation(new Quaternion(pose.qx(), pose.qy(), pose.qz(), pose.qw()));
-            mNode1.setRenderable(modelFuture.getNow(null));
-            mInfoCard.setParent(mNode1);
-            mInfoCard.setLocalPosition(new Vector3(0.0f, 0.0f, -0.2f));
+            mNode1.setRenderable(modelFuture1.getNow(null));
+            if(mInfoCard == null){
+                mInfoCard = createInfoCard(mContext, mess2);
+            }
         }else{
             if(mNode2 == null){
-                mNode2 = new Node();
-                mNode2.setParent(this);
-                mNode2.setOnTapListener(new OnTapListener() {
+                Vector3 posi = new Vector3(0.0f, 0.0f, -0.1f);
+                mNode2 = createNode(posi, new Quaternion(), new OnTapListener() {
                     @Override
                     public void onTap(HitTestResult hitTestResult, MotionEvent motionEvent) {
                         mCallback.getItem(mTreasureChestRank);
@@ -134,18 +135,22 @@ public class AugmentedImageNode extends AnchorNode {
                     }
                 });
             }
-            Pose pose = Pose.makeTranslation(0.0f, 0.0f, -0.15f);
-
-            mNode2.setLocalPosition(new Vector3(pose.tx(), pose.ty(), pose.tz()));
-            //mNode2.setLocalRotation(new Quaternion(pose.qx(), pose.qy(), pose.qz(), pose.qw()));
             mNode2.setRenderable(modelFuture2.getNow(null));
         }
+    }
+
+    private Node createNode(Vector3 initPosition, Quaternion initQuaternion, OnTapListener listener){
+        Node node = new Node();
+        node.setParent(this);
+        node.setOnTapListener(listener);
+        node.setLocalPosition(initPosition);
+        node.setLocalRotation(initQuaternion);
+        return node;
     }
 
     public AugmentedImage getImage() {
         return image;
     }
-
 
     private Node createInfoCard(Context con, String mess) {
         Node infoCard = new Node();
@@ -164,38 +169,42 @@ public class AugmentedImageNode extends AnchorNode {
                             throw new AssertionError("Could not load plane card view.", throwable);
                         });
         infoCard.setEnabled(false);
+        infoCard.setParent(mNode1);
+        Vector3 vec1 = new Vector3(0.0f, 0.5f, 0.0f);
+        Vector3 vec2 = Vector3.add(mInitPosition, vec1);
+        infoCard.setLocalPosition(vec2);
         return infoCard;
     }
 
-    private Node createSelectCard(Context con){
-        Node infoCard = new Node();
-        ViewRenderable.builder()
-                .setView(con, R.layout.select_view)
-                .build()
-                .thenAccept(
-                        (renderable) -> {
-                            infoCard.setRenderable(renderable);
-                            View selectView = renderable.getView();
-                            Button btn = selectView.findViewById(R.id.btn1);
-                            btn.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    mIsNodeDisp = false;
-                                    removeChild(mNode1);
-                                    mNode1.setEnabled(false);
-                                    Pose pose = Pose.makeTranslation(100.0f, 100.0f, -100.0f);
-                                    mNode1.setLocalPosition(new Vector3(pose.tx(), pose.ty(), pose.tz()));
-                                    mNode1.setParent(AugmentedImageNode.this);
-                                }
-                            });
-                        })
-                .exceptionally(
-                        (throwable) -> {
-                            throw new AssertionError("Could not load plane card view.", throwable);
-                        });
-        infoCard.setEnabled(false);
-        return infoCard;
-    }
+//    private Node createSelectCard(Context con){
+//        Node infoCard = new Node();
+//        ViewRenderable.builder()
+//                .setView(con, R.layout.select_view)
+//                .build()
+//                .thenAccept(
+//                        (renderable) -> {
+//                            infoCard.setRenderable(renderable);
+//                            View selectView = renderable.getView();
+//                            Button btn = selectView.findViewById(R.id.btn1);
+//                            btn.setOnClickListener(new View.OnClickListener() {
+//                                @Override
+//                                public void onClick(View v) {
+//                                    mIsNodeDisp = false;
+//                                    removeChild(mNode1);
+//                                    mNode1.setEnabled(false);
+//                                    Pose pose = Pose.makeTranslation(100.0f, 100.0f, -100.0f);
+//                                    mNode1.setLocalPosition(new Vector3(pose.tx(), pose.ty(), pose.tz()));
+//                                    mNode1.setParent(AugmentedImageNode.this);
+//                                }
+//                            });
+//                        })
+//                .exceptionally(
+//                        (throwable) -> {
+//                            throw new AssertionError("Could not load plane card view.", throwable);
+//                        });
+//        infoCard.setEnabled(false);
+//        return infoCard;
+//    }
 
     @Override
     public void onUpdate(FrameTime frameTime) {
@@ -207,8 +216,12 @@ public class AugmentedImageNode extends AnchorNode {
         }
         Vector3 cameraPosition = getScene().getCamera().getWorldPosition();
         Vector3 cardPosition = mInfoCard.getWorldPosition();
-        Vector3 direction = Vector3.subtract(cameraPosition, cardPosition);
-        Quaternion lookRotation = Quaternion.lookRotation(direction, Vector3.up());
-        mInfoCard.setWorldRotation(lookRotation);
+        Vector3 objPosition = mNode1.getWorldPosition();
+        Vector3 direction1 = Vector3.subtract(cameraPosition, cardPosition);
+        Vector3 direction2 = Vector3.subtract(cameraPosition, objPosition);
+        Quaternion lookRotation1 = Quaternion.lookRotation(direction1, Vector3.up());
+        Quaternion lookRotation2 = Quaternion.lookRotation(direction2, Vector3.up());
+        mInfoCard.setWorldRotation(lookRotation1);
+        //mNode1.setWorldRotation(lookRotation2);
     }
 }

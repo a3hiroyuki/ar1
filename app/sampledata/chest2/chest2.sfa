@@ -1,0 +1,87 @@
+{
+   materials: [
+      {
+         name: "Material",
+         parameters: [
+            {
+               baseColor: "wood_planks_new_0025_01_s",
+            },
+            {
+               baseColorTint: [
+                  1,
+                  1,
+                  1,
+                  1,
+               ],
+            },
+            {
+               metallic: 1,
+            },
+            {
+               roughness: 1,
+            },
+            {
+               opacity: null,
+            },
+         ],
+         source: "build/sceneform_sdk/default_materials/obj_material.sfm",
+      },
+      {
+         name: "None",
+         parameters: [
+            {
+               baseColor: "wood_planks_new_0025_01_s",
+            },
+            {
+               baseColorTint: [
+                  0.8,
+                  0.80000000000000004,
+                  0.80000000000000004,
+                  1,
+               ],
+            },
+            {
+               metallic: 1,
+            },
+            {
+               roughness: 1,
+            },
+            {
+               opacity: null,
+            },
+         ],
+         source: "build/sceneform_sdk/default_materials/obj_material.sfm",
+      },
+   ],
+   model: {
+      attributes: [
+         "Position",
+         "TexCoord",
+         "Orientation",
+      ],
+      file: "sampledata/chest2/chest2.obj",
+      name: "chest2",
+      scale: 0.05,
+      suggested_collision: {
+         center: {
+            x: 0,
+            y: 0,
+            z: 0,
+         },
+         size: {
+            x: 1,
+            y: 1,
+            z: 1,
+         },
+         type: "Box",
+      },
+   },
+   samplers: [
+      {
+         file: "sampledata/chest2\\wood_planks_new_0025_01_s.png",
+         name: "wood_planks_new_0025_01_s",
+         pipeline_name: "wood_planks_new_0025_01_s.png",
+      },
+   ],
+   version: "0.51:1",
+}
