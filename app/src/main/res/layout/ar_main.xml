@@ -9,12 +9,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="aaaa"/>
-
     <ImageView
         android:id="@+id/image_view_fit_to_scan"
         android:layout_width="match_parent"
@@ -24,9 +18,25 @@
         />
 
     <ImageView
-        android:id="@+id/image_key"
+        android:id="@+id/image_key1"
         android:layout_width="100dp"
         android:layout_height="100dp"
+        android:layout_gravity="top"
+        />
+
+    <ImageView
+        android:id="@+id/image_key2"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginLeft="100dp"
+        android:layout_gravity="top"
+        />
+
+    <ImageView
+        android:id="@+id/image_key3"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginLeft="200dp"
         android:layout_gravity="top"
         />
 

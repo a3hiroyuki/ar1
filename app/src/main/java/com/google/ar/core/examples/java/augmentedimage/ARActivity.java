@@ -36,8 +36,10 @@ import com.google.ar.sceneform.FrameTime;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import com.bumptech.glide.Glide;
 
@@ -59,13 +61,15 @@ public class ArActivity extends AppCompatActivity implements AugmentedImageNode.
     public static int gKeyScore = 0;
 
     private ImageView mFitToScanView;
-    ImageView mKeyView;
+    ImageView[] mKeyViewArr = new ImageView[3];
 
     private RequestManager mGlideRequestManager;
 
     private static final int SOUND_NUM = 10;
     private SoundPool mSp;
     private Map<String, Integer> mSoundMap = new HashMap<String, Integer>();
+
+    public static List<Integer> gKeyScoreList = new ArrayList<Integer>();
 
     private Map<Integer, String> keyUriMap = new HashMap<Integer, String>(){
         {put(0, "file:///android_asset/");}
@@ -81,6 +85,10 @@ public class ArActivity extends AppCompatActivity implements AugmentedImageNode.
 
         Intent intent = getIntent();
         gKeyScore = intent.getIntExtra("key_rank", 0);
+
+        for(int i=1; i<=gKeyScore; i++){
+            gKeyScoreList.add(i);
+        }
 
         //サウンド関連処理
         AudioAttributes attr = new AudioAttributes.Builder()
@@ -114,14 +122,19 @@ public class ArActivity extends AppCompatActivity implements AugmentedImageNode.
         mTcFactory.createAll();
 
         mFitToScanView = findViewById(R.id.image_view_fit_to_scan);
-        mKeyView = findViewById(R.id.image_key);
+        mKeyViewArr[0] = findViewById(R.id.image_key1);
+        mKeyViewArr[1] = findViewById(R.id.image_key2);
+        mKeyViewArr[2] = findViewById(R.id.image_key3);
         mGlideRequestManager = Glide.with(this);
         mGlideRequestManager
                 .load(Uri.parse("file:///android_asset/fit_to_scan2.png"))
                 .into(mFitToScanView);
-        mGlideRequestManager
-                .load(Uri.parse(keyUriMap.get(gKeyScore)))
-                .into(mKeyView);
+
+        for(int id : gKeyScoreList){
+            mGlideRequestManager
+                    .load(Uri.parse(keyUriMap.get(id)))
+                    .into(mKeyViewArr[id - 1]);
+        }
 
         initializeSceneView();
     }
@@ -317,11 +330,11 @@ public class ArActivity extends AppCompatActivity implements AugmentedImageNode.
     }
 
     @Override
-    public void openTreasureChest() {
+    public void openTreasureChest(int rank) {
         playSound("seikai");
         mGlideRequestManager
                 .load(Uri.parse(keyUriMap.get(0)))
-                .into(mKeyView);
+                .into(mKeyViewArr[rank - 1]);
     }
 
     @Override

@@ -42,7 +42,7 @@ public class AugmentedImageNode extends AnchorNode {
     private Quaternion mInitRotation = new Quaternion();
 
     public interface Callback{
-        public abstract void openTreasureChest();
+        public abstract void openTreasureChest(int rank);
         public abstract void getItem(int itemGrade);
         public abstract void playSound(String name);
     }
@@ -104,13 +104,18 @@ public class AugmentedImageNode extends AnchorNode {
                 mNode1 = createNode(mInitPosition, mInitRotation, new OnTapListener() {
                     @Override
                     public void onTap(HitTestResult hitTestResult, MotionEvent motionEvent) {
-                        if (ArActivity.gKeyScore >= mTreasureChestRank) {
+                        if (ArActivity.gKeyScoreList.contains(mTreasureChestRank)) {
+                            for(int i=0; i<ArActivity.gKeyScoreList.size(); i++){
+                                if(ArActivity.gKeyScoreList.get(i) == mTreasureChestRank){
+                                    ArActivity.gKeyScoreList.remove(i);
+                                }
+                            }
                             mIsNodeDisp = false;
                             Pose pose = Pose.makeTranslation(100.0f, 100.0f, -100.0f);
                             mNode1.setLocalPosition(new Vector3(pose.tx(), pose.ty(), pose.tz()));
                             mNode1.setParent(AugmentedImageNode.this);
                             setImage(image);
-                            mCallback.openTreasureChest();
+                            mCallback.openTreasureChest(mTreasureChestRank);
                         } else {
                             mCallback.playSound("hazure");
                             mInfoCard.setEnabled(true);
@@ -124,7 +129,7 @@ public class AugmentedImageNode extends AnchorNode {
             }
         }else{
             if(mNode2 == null){
-                Vector3 posi = new Vector3(0.0f, 0.0f, -0.1f);
+                Vector3 posi = new Vector3(0.05f, 0.0f, -0.1f);
                 mNode2 = createNode(posi, new Quaternion(), new OnTapListener() {
                     @Override
                     public void onTap(HitTestResult hitTestResult, MotionEvent motionEvent) {

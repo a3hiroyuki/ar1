@@ -45,7 +45,9 @@ TreasureChestFactory extends Factory {
     public void createAll(){
         create(ChestColor.Gold, "delorean", "delorean.jpg");
         create(ChestColor.Silver, "docomodake", "docomodake.jpg");
-        create(ChestColor.Bronse, "poinko", "poinko.png");
+        create(ChestColor.Silver, "poinko", "poinko.png");
+        create(ChestColor.Bronse, "clock1", "clock_1.jpg");
+        create(ChestColor.Gold, "clock2", "clock_2.jpg");
     }
 
     public Map getMap(){

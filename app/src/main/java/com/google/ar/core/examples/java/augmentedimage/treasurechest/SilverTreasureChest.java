@@ -11,7 +11,7 @@ import com.google.ar.sceneform.math.Vector3;
 public class SilverTreasureChest extends TreasureChestBase {
 
     private static String OBJ_NAME = "chest2.sfb";
-    private static String REWARD_NAME = "Saturn.sfb";
+    private static String REWARD_NAME = "item2.sfb";
     private static int RANK = 2;
 
     public SilverTreasureChest(Context con, String id, String fileName) {
