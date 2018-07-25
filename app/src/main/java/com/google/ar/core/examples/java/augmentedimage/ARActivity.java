@@ -1,4 +1,4 @@
-package com.google.ar.core.examples.java.augmentedimage;
+package com.abe.ar.augmentedimage;
 
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
@@ -13,6 +13,13 @@ import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.abe.ar.R;
+import com.abe.ar.augmentedimage.factory.TreasureChestFactory;
+import com.abe.ar.augmentedimage.sceneform.AugmentedImageNode;
+import com.abe.ar.common.helpers.CameraPermissionHelper;
+import com.abe.ar.common.helpers.FullScreenHelper;
+import com.abe.ar.common.helpers.SnackbarHelper;
+import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestManager;
 import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.AugmentedImage;
@@ -21,11 +28,6 @@ import com.google.ar.core.Config;
 import com.google.ar.core.Frame;
 import com.google.ar.core.Session;
 import com.google.ar.core.TrackingState;
-import com.google.ar.core.examples.java.augmentedimage.factory.TreasureChestFactory;
-import com.google.ar.core.examples.java.augmentedimage.sceneform.AugmentedImageNode;
-import com.google.ar.core.examples.java.common.helpers.CameraPermissionHelper;
-import com.google.ar.core.examples.java.common.helpers.FullScreenHelper;
-import com.google.ar.core.examples.java.common.helpers.SnackbarHelper;
 import com.google.ar.core.exceptions.CameraNotAvailableException;
 import com.google.ar.core.exceptions.UnavailableApkTooOldException;
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
@@ -41,41 +43,53 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.bumptech.glide.Glide;
 
-public class ArActivity extends AppCompatActivity implements AugmentedImageNode.Callback{
+public class ArActivity extends AppCompatActivity implements AugmentedImageNode.Callback {
     private static final String TAG = ArActivity.class.getSimpleName();
-
+    private static final int SOUND_NUM = 10;
+    public static int gKeyScore = 0;
+    public static List<Integer> gKeyScoreList = new ArrayList<Integer>();
+    private final SnackbarHelper messageSnackbarHelper = new SnackbarHelper();
+    ImageView[] mKeyViewArr = new ImageView[3];
     // Rendering. The Renderers are created here, and initialized when the GL surface is created.
     private ArSceneView arSceneView;
-
     private boolean installRequested;
-
     private Session session;
-    private final SnackbarHelper messageSnackbarHelper = new SnackbarHelper();
-
     private boolean shouldConfigureSession = false;
-
     private TreasureChestFactory mTcFactory;
-
-    public static int gKeyScore = 0;
-
     private ImageView mFitToScanView;
-    ImageView[] mKeyViewArr = new ImageView[3];
-
     private RequestManager mGlideRequestManager;
-
-    private static final int SOUND_NUM = 10;
     private SoundPool mSp;
     private Map<String, Integer> mSoundMap = new HashMap<String, Integer>();
+    private Map<Integer, String> keyUriMap = new HashMap<Integer, String>() {
+        {
+            put(0, "file:///android_asset/");
+        }
 
-    public static List<Integer> gKeyScoreList = new ArrayList<Integer>();
+        {
+            put(1, "file:///android_asset/bronze_key.png");
+        }
 
-    private Map<Integer, String> keyUriMap = new HashMap<Integer, String>(){
-        {put(0, "file:///android_asset/");}
-        {put(1, "file:///android_asset/bronze_key.png");}
-        {put(2, "file:///android_asset/silver_key.png");}
-        {put(3, "file:///android_asset/gold_key.png");}
+        {
+            put(2, "file:///android_asset/silver_key.png");
+        }
+
+        {
+            put(3, "file:///android_asset/gold_key.png");
+        }
+    };
+    private Map<Integer, String> itemUriMap = new HashMap<Integer, String>() {
+        {
+            put(1, "file:///android_asset/kin.png");
+        }
+
+        {
+            put(2, "file:///android_asset/kin.png");
+        }
+
+        {
+            put(3, "file:///android_asset/kin.png");
+        }
     };
 
     @Override
@@ -86,7 +100,8 @@ public class ArActivity extends AppCompatActivity implements AugmentedImageNode.
         Intent intent = getIntent();
         gKeyScore = intent.getIntExtra("key_rank", 0);
 
-        for(int i=1; i<=gKeyScore; i++){
+        gKeyScoreList.clear();
+        for (int i = 1; i <= gKeyScore; i++) {
             gKeyScoreList.add(i);
         }
 
@@ -130,7 +145,7 @@ public class ArActivity extends AppCompatActivity implements AugmentedImageNode.
                 .load(Uri.parse("file:///android_asset/fit_to_scan2.png"))
                 .into(mFitToScanView);
 
-        for(int id : gKeyScoreList){
+        for (int id : gKeyScoreList) {
             mGlideRequestManager
                     .load(Uri.parse(keyUriMap.get(id)))
                     .into(mKeyViewArr[id - 1]);
@@ -142,7 +157,6 @@ public class ArActivity extends AppCompatActivity implements AugmentedImageNode.
     @Override
     protected void onResume() {
         super.onResume();
-
 
 
         if (session == null) {
@@ -285,7 +299,7 @@ public class ArActivity extends AppCompatActivity implements AugmentedImageNode.
 
         Map<String, String> idMap = mTcFactory.getMap();
 
-        for(String id : idMap.keySet()){
+        for (String id : idMap.keySet()) {
             String fileName = idMap.get(id);
             Bitmap augmentedImageBitmap = loadAugmentedImage(fileName);
             if (augmentedImageBitmap == null) {
@@ -340,6 +354,9 @@ public class ArActivity extends AppCompatActivity implements AugmentedImageNode.
     @Override
     public void getItem(int itemGrade) {
         playSound("get");
+        mGlideRequestManager
+                .load(Uri.parse(itemUriMap.get(itemGrade)))
+                .into(mKeyViewArr[itemGrade - 1]);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -349,8 +366,9 @@ public class ArActivity extends AppCompatActivity implements AugmentedImageNode.
                     e.printStackTrace();
                 }
                 Intent intent = new Intent(getApplicationContext(), ResultActivity.class);
+                intent.putExtra("aaa", itemGrade);
                 getApplicationContext().startActivity(intent);
-                finish();
+                //finish();
             }
         }).start();
     }
